@@ -1,8 +1,8 @@
-from typing import Optional
 from fastapi import FastAPI, status, Response, HTTPException
 from pydantic import BaseModel
 from random import randrange
-import psycopg
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import time
 
 app = FastAPI()
@@ -17,7 +17,7 @@ class Post(BaseModel):
 
 while True:
     try:
-        conn = psycopg.connect("dbname=fastapi user=postgres password=changeme123")
+        conn = psycopg2.connect("dbname=fastapi user=postgres password=changeme123", cursor_factory=RealDictCursor)
         print("Connection successful")
         break
     except Exception as error:
@@ -49,7 +49,7 @@ def read_root():
 @app.get("/posts")
 def get_posts():
     with conn.cursor() as cur:
-        cur.execute("SELECT * FROM posts")
+        cur.execute("""SELECT * FROM posts""")
         posts = cur.fetchall()
     return {"data": posts}
 
