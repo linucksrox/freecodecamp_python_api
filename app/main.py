@@ -2,15 +2,29 @@ from typing import Optional
 from fastapi import FastAPI, status, Response, HTTPException
 from pydantic import BaseModel
 from random import randrange
+import psycopg
 
 app = FastAPI()
 
 
 class Post(BaseModel):
+    id: int
     title: str
     content: str
     published: bool = True  # default to True, making this field optional in the POST request
-    rating: Optional[int] = None  # fully optional field, defaults to None if not provided
+
+
+try:
+    with psycopg.connect("dbname=fastapi user=postgres password=changeme123") as conn:
+        print("Connection successful")
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM posts")
+            cur.fetchall()
+            for record in cur:
+                print(record)
+except Exception as error:
+    print("Connecting to database failed")
+    print("Error: ", error)
 
 
 my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1},
