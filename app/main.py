@@ -3,6 +3,7 @@ from fastapi import FastAPI, status, Response, HTTPException
 from pydantic import BaseModel
 from random import randrange
 import psycopg
+import time
 
 app = FastAPI()
 
@@ -14,17 +15,14 @@ class Post(BaseModel):
     published: bool = True  # default to True, making this field optional in the POST request
 
 
-try:
-    with psycopg.connect("dbname=fastapi user=postgres password=changeme123") as conn:
+while True:
+    try:
+        conn = psycopg.connect("dbname=fastapi user=postgres password=changeme123")
         print("Connection successful")
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM posts")
-            cur.fetchall()
-            for record in cur:
-                print(record)
-except Exception as error:
-    print("Connecting to database failed")
-    print("Error: ", error)
+        break
+    except Exception as error:
+        print("Connecting to database failed: ", error)
+        time.sleep(3)
 
 
 my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1},
@@ -50,7 +48,10 @@ def read_root():
 
 @app.get("/posts")
 def get_posts():
-    return {"data": my_posts}
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM posts")
+        posts = cur.fetchall()
+    return {"data": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
