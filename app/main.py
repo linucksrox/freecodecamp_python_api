@@ -65,8 +65,10 @@ def get_posts():
 
 
 @app.get("/posts/{post_id}")
-def get_post(post_id: int):
-    post = find_post(post_id)
+def get_post(post_id: str):
+    with conn.cursor() as cur:
+        cur.execute("""SELECT * FROM posts WHERE id = %s """, str(post_id))
+        post = cur.fetchone()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {post_id} was not found")
