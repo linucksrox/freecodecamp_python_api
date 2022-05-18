@@ -46,20 +46,22 @@ def read_root():
     return {"message": "Hello World"}
 
 
+@app.post("/posts", status_code=status.HTTP_201_CREATED)
+def create_posts(post: Post):
+    with conn.cursor() as cur:
+        cur.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,
+                    (post.title, post.content, post.published))
+        new_post = cur.fetchone()
+    conn.commit()
+    return {"data": new_post}
+
+
 @app.get("/posts")
 def get_posts():
     with conn.cursor() as cur:
         cur.execute("""SELECT * FROM posts""")
         posts = cur.fetchall()
     return {"data": posts}
-
-
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post):
-    post_dict = post.dict()
-    post_dict['id'] = randrange(0, 10921295)
-    my_posts.append(post_dict)
-    return {"data": post_dict}
 
 
 @app.get("/posts/{post_id}")
@@ -69,19 +71,6 @@ def get_post(post_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {post_id} was not found")
     return {"post detail": post}
-
-
-@app.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(post_id: int):
-    # find index in array containing the required post id
-    index = find_post_index(post_id)
-
-    if index is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"post with id: {post_id} does not exist")
-
-    my_posts.pop(index)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.put("/posts/{post_id}")
@@ -96,3 +85,16 @@ def update_post(post_id: int, post: Post):
     post_dict['id'] = post_id
     my_posts[index] = post_dict
     return {"data": post_dict}
+
+
+@app.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(post_id: int):
+    # find index in array containing the required post id
+    index = find_post_index(post_id)
+
+    if index is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"post with id: {post_id} does not exist")
+
+    my_posts.pop(index)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
