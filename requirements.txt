@@ -28,5 +28,5 @@ urllib3==1.26.9
 uvicorn==0.17.6
 watchgod==0.8.2
 websockets==10.3
-
 psycopg==2.9.3
+sqlalchemy==1.4.36
