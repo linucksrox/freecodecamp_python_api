@@ -50,11 +50,6 @@ def read_root():
     return {"message": "Hello World"}
 
 
-@app.get("/sqlalchemy")
-def test_posts(db: Session = Depends(get_db)):
-    return {"status": "success"}
-
-
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):
     with conn.cursor() as cur:
@@ -66,18 +61,14 @@ def create_posts(post: Post):
 
 
 @app.get("/posts")
-def get_posts():
-    with conn.cursor() as cur:
-        cur.execute("""SELECT * FROM posts""")
-        posts = cur.fetchall()
+def get_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 
 @app.get("/posts/{post_id}")
-def get_post(post_id: str):
-    with conn.cursor() as cur:
-        cur.execute("""SELECT * FROM posts WHERE id = %s """, str(post_id))
-        post = cur.fetchone()
+def get_post(post_id: int, db: Session = Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {post_id} was not found")
